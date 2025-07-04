@@ -150,7 +150,7 @@ void EnhancedMadgwickAHRSupdate(float gx, float gy, float gz,
             integralFBz = 0.0f;
         }
         
-        // Apply proportional feedback and gradient descent
+        // Apply proportional feedback and gradient descent  // 应该考虑是否需要权重分配：待定……
         gx += Kp * ex - beta * s1;
         gy += Kp * ey - beta * s2;
         gz += Kp * ez - beta * s3;

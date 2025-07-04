@@ -16,7 +16,9 @@
 
 //----------------------------------------------------------------------------------------------------
 // Configuration
-
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+#endif
 #define SAMPLE_FREQ     100.0f      // Sample frequency in Hz
 #define BETA_DEF        0.1f        // Default gradient descent gain
 #define KP_DEF          2.0f        // Default proportional gain
