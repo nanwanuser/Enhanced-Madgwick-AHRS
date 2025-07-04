@@ -8,7 +8,7 @@
 // - Runge-Kutta integration
 //
 // Date         Author          Notes
-// 2025/01/01   Enhanced        Combined implementation
+// 2025/07/04   Nanwan        Combined implementation
 //
 //=====================================================================================================
 
