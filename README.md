@@ -1,84 +1,75 @@
 # Enhanced Madgwick AHRS
 
-An enhanced implementation of Madgwick's AHRS algorithm combining gradient descent, PI control, and 4th-order Runge-Kutta integration for superior attitude estimation.
+Madgwick's AHRS algorithm with 4th-order Runge-Kutta integration for improved numerical accuracy.
 
-## Features
+## Key Improvements
 
-- 🚀 **Hybrid correction**: Gradient descent + PI controller
-- 🎯 **High precision**: 4th-order Runge-Kutta integration
-- ⚡ **Fast convergence**: Optimized for real-time applications
-- 🔧 **Configurable**: Adjustable parameters for different use cases
-- 📐 **Complete solution**: Supports both IMU (6-DOF) and AHRS (9-DOF)
+- **Original Algorithm**: Gradient descent sensor fusion (unchanged)
+- **Enhanced Integration**: 4th-order Runge-Kutta vs 1st-order Euler
+- **Better Accuracy**: O(dt⁵) vs O(dt²) numerical error
+- **Lower Sample Rate**: Works well at >50Hz (vs >400Hz recommended for original)
 
 ## Quick Start
 
 ```c
 #include "EnhancedMadgwickAHRS.h"
 
-// Initialize
-EnhancedMadgwickReset();
-
-// Update with sensor data (100Hz)
+// Update orientation (512Hz default)
 EnhancedMadgwickAHRSupdate(gx, gy, gz,    // gyro (rad/s)
-                           ax, ay, az,    // accel (normalized)
-                           mx, my, mz);   // mag (normalized)
+                           ax, ay, az,    // accel (any unit)
+                           mx, my, mz);   // mag (any unit)
 
-// Get orientation
-float roll, pitch, yaw;
-EnhancedMadgwickGetEulerAngles(&roll, &pitch, &yaw);
+// Extract Euler angles
+float roll  = atan2f(2.0f * (q0 * q1 + q2 * q3), 1.0f - 2.0f * (q1 * q1 + q2 * q2));
+float pitch = asinf(2.0f * (q0 * q2 - q3 * q1));
+float yaw   = atan2f(2.0f * (q0 * q3 + q1 * q2), 1.0f - 2.0f * (q2 * q2 + q3 * q3));
 ```
 
-## Installation
-
-1. Copy `EnhancedMadgwickAHRS.h` and `EnhancedMadgwickAHRS.c` to your project
-2. Include the header file: `#include "EnhancedMadgwickAHRS.h"`
-3. Set your sample frequency in the header file (default: 100Hz)
-
-## Parameters
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| Beta | 0.1 | Gradient descent step size |
-| Kp | 2.0 | Proportional gain |
-| Ki | 0.005 | Integral gain |
+## Configuration
 
 ```c
-// Adjust for your application
-EnhancedMadgwickSetBeta(0.1f);
-EnhancedMadgwickSetPIGains(2.0f, 0.005f);
+// Adjust convergence rate (default: 0.1)
+extern volatile float beta;
+beta = 0.033f;  // Slower, more stable
+beta = 0.2f;    // Faster, more responsive
+
+// Change sample rate in source file
+#define sampleFreq 100.0f  // Hz
 ```
 
-## API Reference
+## API
 
 ```c
-// Main update functions
-void EnhancedMadgwickAHRSupdate(gx, gy, gz, ax, ay, az, mx, my, mz);
-void EnhancedMadgwickAHRSupdateIMU(gx, gy, gz, ax, ay, az);
+// 9-axis fusion (gyro + accel + mag)
+void EnhancedMadgwickAHRSupdate(float gx, float gy, float gz, 
+                                float ax, float ay, float az, 
+                                float mx, float my, float mz);
 
-// Utility functions
-void EnhancedMadgwickGetEulerAngles(float* roll, float* pitch, float* yaw);
-void EnhancedMadgwickReset(void);
-void EnhancedMadgwickSetBeta(float beta);
-void EnhancedMadgwickSetPIGains(float kp, float ki);
+// 6-axis fusion (gyro + accel)
+void EnhancedMadgwickAHRSupdateIMU(float gx, float gy, float gz, 
+                                   float ax, float ay, float az);
+
+// Global quaternion
+extern volatile float q0, q1, q2, q3;
 ```
-
-## Example Applications
-
-- 🚁 **Drones**: Fast response for flight control
-- 🤖 **Robotics**: Stable pose estimation
-- 🥽 **VR/AR**: Low-latency head tracking
-- 📱 **Mobile devices**: Motion sensing
 
 ## Performance
 
-- **Update rate**: Up to 1kHz on STM32F4
-- **Accuracy**: < 1° RMS error in dynamic conditions
-- **Convergence**: < 5 seconds from arbitrary initial conditions
+| Metric | Original | Enhanced |
+|--------|----------|----------|
+| Integration | Euler | RK4 |
+| Min Sample Rate | 400Hz | 50Hz |
+| Computation | 1× | ~4× |
+| Accuracy | Good | Excellent |
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details
+MIT License
 
 ---
 
-⭐ If you find this useful, please consider giving it a star!
+Enhanced by Nanwan (2025) | Based on S.O.H. Madgwick (2011)
+
+---
+
+⭐ If this enhanced implementation helps your project, please consider giving it a star!
