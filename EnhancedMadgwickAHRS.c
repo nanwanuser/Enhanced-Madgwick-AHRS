@@ -39,8 +39,10 @@ static float k1[4], k2[4], k3[4], k4[4];
 // Function declarations
 
 float invSqrt(float x);
-void quaternionDerivative(float q0, float q1, float q2, float q3, 
-                         float wx, float wy, float wz, float* dq);
+void quaternionDerivativeWithGradient(float q0, float q1, float q2, float q3,
+                                     float wx, float wy, float wz,
+                                     float s0, float s1, float s2, float s3,
+                                     float* dq);
 
 //====================================================================================================
 // Functions
@@ -53,7 +55,6 @@ void EnhancedMadgwickAHRSupdate(float gx, float gy, float gz,
                                float mx, float my, float mz) {
     float recipNorm;
     float s0, s1, s2, s3;
-    float qDot1, qDot2, qDot3, qDot4;
     float hx, hy;
     float _2q0mx, _2q0my, _2q0mz, _2q1mx, _2bx, _2bz, _4bx, _4bz;
     float _2q0, _2q1, _2q2, _2q3, _2q0q2, _2q2q3;
@@ -150,10 +151,10 @@ void EnhancedMadgwickAHRSupdate(float gx, float gy, float gz,
             integralFBz = 0.0f;
         }
         
-        // Apply proportional feedback and gradient descent  // 应该考虑是否需要权重分配：待定……
-        gx += Kp * ex - beta * s1;
-        gy += Kp * ey - beta * s2;
-        gz += Kp * ez - beta * s3;
+        // Apply proportional feedback
+        gx += Kp * ex;
+        gy += Kp * ey;
+        gz += Kp * ez;
         
         // Store current quaternion
         qa = q0;
@@ -163,28 +164,28 @@ void EnhancedMadgwickAHRSupdate(float gx, float gy, float gz,
         
         // Runge-Kutta 4th order integration
         // k1
-        quaternionDerivative(qa, qb, qc, qd, gx, gy, gz, k1);
+        quaternionDerivativeWithGradient(qa, qb, qc, qd, gx, gy, gz, s0, s1, s2, s3, k1);
         
         // k2
-        quaternionDerivative(qa + 0.5f * dt * k1[0], 
+        quaternionDerivativeWithGradient(qa + 0.5f * dt * k1[0], 
                            qb + 0.5f * dt * k1[1],
                            qc + 0.5f * dt * k1[2],
                            qd + 0.5f * dt * k1[3],
-                           gx, gy, gz, k2);
+                           gx, gy, gz, s0, s1, s2, s3, k2);
         
         // k3
-        quaternionDerivative(qa + 0.5f * dt * k2[0],
+        quaternionDerivativeWithGradient(qa + 0.5f * dt * k2[0],
                            qb + 0.5f * dt * k2[1],
                            qc + 0.5f * dt * k2[2],
                            qd + 0.5f * dt * k2[3],
-                           gx, gy, gz, k3);
+                           gx, gy, gz, s0, s1, s2, s3, k3);
         
         // k4
-        quaternionDerivative(qa + dt * k3[0],
+        quaternionDerivativeWithGradient(qa + dt * k3[0],
                            qb + dt * k3[1],
                            qc + dt * k3[2],
                            qd + dt * k3[3],
-                           gx, gy, gz, k4);
+                           gx, gy, gz, s0, s1, s2, s3, k4);
         
         // Update quaternion
         q0 += dt / 6.0f * (k1[0] + 2.0f * k2[0] + 2.0f * k3[0] + k4[0]);
@@ -271,10 +272,10 @@ void EnhancedMadgwickAHRSupdateIMU(float gx, float gy, float gz,
             integralFBz = 0.0f;
         }
         
-        // Apply proportional feedback and gradient descent
-        gx += Kp * ex - beta * s1;
-        gy += Kp * ey - beta * s2;
-        gz += Kp * ez - beta * s3;
+        // Apply proportional feedback
+        gx += Kp * ex;
+        gy += Kp * ey;
+        gz += Kp * ez;
         
         // Store current quaternion
         qa = q0;
@@ -284,28 +285,28 @@ void EnhancedMadgwickAHRSupdateIMU(float gx, float gy, float gz,
         
         // Runge-Kutta 4th order integration
         // k1
-        quaternionDerivative(qa, qb, qc, qd, gx, gy, gz, k1);
+        quaternionDerivativeWithGradient(qa, qb, qc, qd, gx, gy, gz, s0, s1, s2, s3, k1);
         
         // k2
-        quaternionDerivative(qa + 0.5f * dt * k1[0], 
+        quaternionDerivativeWithGradient(qa + 0.5f * dt * k1[0], 
                            qb + 0.5f * dt * k1[1],
                            qc + 0.5f * dt * k1[2],
                            qd + 0.5f * dt * k1[3],
-                           gx, gy, gz, k2);
+                           gx, gy, gz, s0, s1, s2, s3, k2);
         
         // k3
-        quaternionDerivative(qa + 0.5f * dt * k2[0],
+        quaternionDerivativeWithGradient(qa + 0.5f * dt * k2[0],
                            qb + 0.5f * dt * k2[1],
                            qc + 0.5f * dt * k2[2],
                            qd + 0.5f * dt * k2[3],
-                           gx, gy, gz, k3);
+                           gx, gy, gz, s0, s1, s2, s3, k3);
         
         // k4
-        quaternionDerivative(qa + dt * k3[0],
+        quaternionDerivativeWithGradient(qa + dt * k3[0],
                            qb + dt * k3[1],
                            qc + dt * k3[2],
                            qd + dt * k3[3],
-                           gx, gy, gz, k4);
+                           gx, gy, gz, s0, s1, s2, s3, k4);
         
         // Update quaternion
         q0 += dt / 6.0f * (k1[0] + 2.0f * k2[0] + 2.0f * k3[0] + k4[0]);
@@ -323,15 +324,17 @@ void EnhancedMadgwickAHRSupdateIMU(float gx, float gy, float gz,
 }
 
 //---------------------------------------------------------------------------------------------------
-// Quaternion derivative calculation
+// Quaternion derivative with gradient descent
 
-void quaternionDerivative(float q0, float q1, float q2, float q3,
-                         float wx, float wy, float wz, float* dq) {
+void quaternionDerivativeWithGradient(float q0, float q1, float q2, float q3,
+                                     float wx, float wy, float wz,
+                                     float s0, float s1, float s2, float s3,
+                                     float* dq) {
     // Quaternion derivative from angular velocity
-    dq[0] = 0.5f * (-q1 * wx - q2 * wy - q3 * wz);
-    dq[1] = 0.5f * ( q0 * wx + q2 * wz - q3 * wy);
-    dq[2] = 0.5f * ( q0 * wy - q1 * wz + q3 * wx);
-    dq[3] = 0.5f * ( q0 * wz + q1 * wy - q2 * wx);
+    dq[0] = 0.5f * (-q1 * wx - q2 * wy - q3 * wz) - beta * s0;
+    dq[1] = 0.5f * ( q0 * wx + q2 * wz - q3 * wy) - beta * s1;
+    dq[2] = 0.5f * ( q0 * wy - q1 * wz + q3 * wx) - beta * s2;
+    dq[3] = 0.5f * ( q0 * wz + q1 * wy - q2 * wx) - beta * s3;
 }
 
 //---------------------------------------------------------------------------------------------------
