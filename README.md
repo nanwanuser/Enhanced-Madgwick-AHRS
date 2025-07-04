@@ -79,14 +79,6 @@ void EnhancedMadgwickSetPIGains(float kp, float ki);
 
 MIT License - see [LICENSE](LICENSE) file for details
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Credits
-
-Based on Sebastian Madgwick's original AHRS algorithm with enhancements inspired by Mahony's complementary filter.
-
 ---
 
 ⭐ If you find this useful, please consider giving it a star!
